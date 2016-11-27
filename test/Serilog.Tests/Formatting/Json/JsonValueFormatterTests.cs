@@ -27,6 +27,7 @@ namespace Serilog.Tests.Formatting.Json
         [InlineData('c', "\"c\"")]
         [InlineData("Hello, world!", "\"Hello, world!\"")]
         [InlineData(true, "true")]
+        [InlineData(false, "false")]
         [InlineData("\\\"\t\r\n\f", "\"\\\\\\\"\\t\\r\\n\\f\"")]
         [InlineData("\u0001", "\"\\u0001\"")]
         [InlineData("a\nb", "\"a\\nb\"")]
@@ -44,37 +45,58 @@ namespace Serilog.Tests.Formatting.Json
         }
 
         [Fact]
-        public void DoubleFormatsAsNumber()
+        public void TimeSpansFormatAsString()
         {
-            JsonLiteralTypesAreFormatted(123.45, "123.45");
+            JsonLiteralTypesAreFormatted(new TimeSpan(1,2,3), "\"01:02:03\"");
+            JsonLiteralTypesAreFormatted(new TimeSpan(123), "\"00:00:00.0000123\"");
+            JsonLiteralTypesAreFormatted(new TimeSpan(1,2,3,4,5), "\"1.02:03:04.0050000\"");
         }
 
-		[Fact]
-		public void DoubleSpecialsFormatAsString()
+        [Theory]
+        [InlineData(123.45, "123.45")]
+        [InlineData(-123.45, "-123.45")]
+        public void DoubleFormatsAsNumber(double value, string expectedJson)
+        {
+            JsonLiteralTypesAreFormatted(value, expectedJson);
+        }
+
+		[Theory]
+        [InlineData(double.NaN, "\"NaN\"")]
+        [InlineData(double.PositiveInfinity, "\"Infinity\"")]
+        [InlineData(double.NegativeInfinity, "\"-Infinity\"")]
+		public void DoubleSpecialsFormatAsString(double value, string expectedJson)
 		{
-			JsonLiteralTypesAreFormatted(double.NaN, "\"NaN\"");
-			JsonLiteralTypesAreFormatted(double.PositiveInfinity, "\"Infinity\"");
-			JsonLiteralTypesAreFormatted(double.NegativeInfinity, "\"-Infinity\"");
-		}
-		
-		[Fact]
-		public void FloatFormatsAsNumber()
-		{
-			JsonLiteralTypesAreFormatted(123.45f, "123.45");
+			JsonLiteralTypesAreFormatted(value, expectedJson);
 		}
 
-		[Fact]
-		public void FloatSpecialsFormatAsString()
+        [Theory]
+        [InlineData(123.45f, "123.45")]
+        [InlineData(-123.45f, "-123.45")]
+        public void FloatFormatsAsNumber(float value, string expectedJson)
 		{
-			JsonLiteralTypesAreFormatted(float.NaN, "\"NaN\"");
-			JsonLiteralTypesAreFormatted(float.PositiveInfinity, "\"Infinity\"");
-			JsonLiteralTypesAreFormatted(float.NegativeInfinity, "\"-Infinity\"");
+			JsonLiteralTypesAreFormatted(value, expectedJson);
+		}
+
+		[Theory]
+        [InlineData(float.NaN, "\"NaN\"")]
+        [InlineData(float.PositiveInfinity, "\"Infinity\"")]
+        [InlineData(float.NegativeInfinity, "\"-Infinity\"")]
+        public void FloatSpecialsFormatAsString(float value, string expectedJson)
+		{
+			JsonLiteralTypesAreFormatted(value, expectedJson);
 		}
 
 		[Fact]
         public void DecimalFormatsAsNumber()
         {
             JsonLiteralTypesAreFormatted(123.45m, "123.45");
+            JsonLiteralTypesAreFormatted(-123.45m, "-123.45");
+        }
+
+        [Fact]
+        public void ObjectFormatedAsStringValue()
+        {
+            JsonLiteralTypesAreFormatted(new object(), "\"System.Object\"");
         }
 
         static string Format(LogEventPropertyValue value)
